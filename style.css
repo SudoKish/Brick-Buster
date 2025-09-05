@@ -11,18 +11,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   margin: 0;
+  padding: 10px; /* ✅ add padding for small screens */
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
-
 h1 {
-  font-size: 45px;
+  font-size: 2.5rem; /* ✅ responsive font */
   color: #fff;
+  text-align: center;
+  margin-bottom: 15px;
 }
 
 canvas {
   background: #f0f0f0;
   display: block;
   border-radius: 5px;
+  max-width: 100%;   /* ✅ prevent overflow */
+  height: auto;      /* ✅ scale with width */
 }
 
 .btn {
@@ -32,6 +37,7 @@ canvas {
   background: #000;
   color: #fff;
   border-radius: 5px;
+  font-size: 1rem; /* ✅ scalable font */
 }
 
 .btn:focus {
@@ -48,24 +54,55 @@ canvas {
 
 .rules-btn {
   position: absolute;
-  top: 30px;
-  left: 30px;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
 }
 
 .rules {
-  position: absolute;
+  position: fixed;  /* ✅ use fixed so it always covers screen */
   top: 0;
   left: 0;
   background: #333;
   color: #fff;
-  min-height: 100vh;
-  width: 400px;
+  height: 100vh;
+  width: 80%;        /* ✅ use percentage instead of fixed px */
+  max-width: 400px;  /* ✅ keep limit for large screens */
   padding: 20px;
   line-height: 1.5;
-  transform: translateX(-400px);
-  transition: transform 1s ease-in-out;
+  transform: translateX(-100%);
+  transition: transform 0.4s ease-in-out; /* ✅ smoother */
+  z-index: 9;
 }
 
 .rules.show {
   transform: translateX(0);
+}
+
+/* ✅ Responsive adjustments */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
+  .rules {
+    width: 100%;   /* full width on small screens */
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
 }
