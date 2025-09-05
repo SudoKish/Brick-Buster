@@ -11,12 +11,12 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   margin: 0;
-  padding: 10px; /* ✅ padding for small screens */
+  padding: 10px; /* padding for small screens */
   overflow-x: hidden; /* prevent horizontal scroll */
 }
 
 h1 {
-  font-size: 2.5rem; /* ✅ responsive font */
+  font-size: 2.5rem; /* responsive font */
   color: #fff;
   text-align: center;
   margin-bottom: 15px;
@@ -26,9 +26,9 @@ canvas {
   background: #f0f0f0;
   display: block;
   border-radius: 5px;
-  max-width: 100%;   /* ✅ prevent overflow */
-  height: auto;      /* ✅ scale with width */
-  touch-action: none; /* ✅ prevent scrolling when touching canvas */
+  max-width: 100%;   /* prevent overflow */
+  height: auto;      /* scale with width */
+  touch-action: none; /* prevent scrolling when touching canvas */
 }
 
 .btn {
@@ -39,7 +39,7 @@ canvas {
   color: #fff;
   border-radius: 5px;
   font-size: 1rem;
-  user-select: none; /* ✅ prevent text selection on double tap */
+  user-select: none; /* prevent text selection on double tap */
 }
 
 .btn:focus {
@@ -62,7 +62,7 @@ canvas {
 }
 
 .rules {
-  position: fixed;  /* ✅ always covers screen */
+  position: fixed;  /* always covers screen */
   top: 0;
   left: 0;
   background: #333;
@@ -81,33 +81,7 @@ canvas {
   transform: translateX(0);
 }
 
-/* ✅ Mobile controls (on-screen buttons) */
-.mobile-controls {
-  display: none; /* hidden by default */
-  width: 100%;
-  margin-top: 15px;
-  display: flex;
-  justify-content: space-between;
-  max-width: 400px;
-}
-
-.mobile-controls button {
-  flex: 1;
-  margin: 0 5px;
-  padding: 12px;
-  font-size: 1.2rem;
-  border-radius: 8px;
-  background: #0095dd;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-}
-
-.mobile-controls button:active {
-  background: #0077aa;
-}
-
-/* ✅ Responsive adjustments */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   h1 {
     font-size: 2rem;
@@ -122,10 +96,6 @@ canvas {
     width: 100%;   
     max-width: none;
   }
-
-  .mobile-controls {
-    display: flex; /* show controls on tablets & mobiles */
-  }
 }
 
 @media (max-width: 480px) {
@@ -136,10 +106,5 @@ canvas {
   .btn {
     padding: 6px 12px;
     font-size: 0.8rem;
-  }
-
-  .mobile-controls button {
-    font-size: 1rem;
-    padding: 10px;
   }
 }
