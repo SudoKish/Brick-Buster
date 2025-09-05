@@ -21,13 +21,6 @@ const ball = {
   visible: true
 };
 
-// ✅ Mobile speed adjustment
-if (window.innerWidth <= 768) {
-  ball.speed = 6; // faster speed on mobile
-  ball.dx = 6;
-  ball.dy = -6;
-}
-
 // Paddle
 const paddle = {
   x: canvas.width / 2 - 40,
@@ -120,6 +113,7 @@ function moveBall() {
     ball.y + ball.size > paddle.y &&
     ball.y - ball.size < paddle.y + paddle.h
   ) {
+    // Bounce with angle effect
     const collidePoint = ball.x - (paddle.x + paddle.w / 2);
     const normalizedPoint = collidePoint / (paddle.w / 2);
     const angle = normalizedPoint * Math.PI / 3; // 60deg max
