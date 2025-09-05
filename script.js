@@ -6,9 +6,9 @@ const ctx = canvas.getContext('2d');
 
 let score = 0;
 
-// Game constants
-const V_WIDTH = 800;
-const V_HEIGHT = 600;
+// Default game size
+const DEFAULT_WIDTH = 800;
+const DEFAULT_HEIGHT = 600;
 const brickRowCount = 9;
 const brickColumnCount = 5;
 const delay = 500;
@@ -19,7 +19,7 @@ const paddle = { w: 80, h: 10, speed: 8, dx: 0, x: 0, y: 0, visible: true };
 // Ball
 const ball = { size: 10, speed: 4, dx: 4, dy: -4, x: 0, y: 0, visible: true };
 
-// Brick
+// Bricks
 const brickInfo = { w: 70, h: 20, padding: 10, offsetX: 45, offsetY: 60, visible: true };
 const bricks = [];
 for (let i = 0; i < brickRowCount; i++) {
@@ -34,25 +34,32 @@ for (let i = 0; i < brickRowCount; i++) {
 // Paddle target for smooth touch
 let targetPaddleX = 0;
 
-// Initialize positions
-function resetPositions() {
-  paddle.x = V_WIDTH / 2 - paddle.w / 2;
-  paddle.y = V_HEIGHT - 20;
-  targetPaddleX = paddle.x;
-
-  ball.x = V_WIDTH / 2;
-  ball.y = V_HEIGHT / 2;
-
-  // Mobile speed boost
+// Resize canvas for mobile and initialize positions
+function resizeCanvas() {
   if (window.innerWidth <= 768) {
-    ball.speed = 5;
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = canvas.width * (DEFAULT_HEIGHT / DEFAULT_WIDTH);
+    ball.speed = 5; // slightly faster on mobile
   } else {
+    canvas.width = DEFAULT_WIDTH;
+    canvas.height = DEFAULT_HEIGHT;
     ball.speed = 4;
   }
+
+  resetPositions();
+}
+
+// Reset positions
+function resetPositions() {
+  paddle.x = canvas.width / 2 - paddle.w / 2;
+  paddle.y = canvas.height - 20;
+  targetPaddleX = paddle.x;
+
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height / 2;
   ball.dx = ball.speed;
   ball.dy = -ball.speed;
 }
-resetPositions();
 
 // Draw functions
 function drawBall() {
@@ -62,6 +69,7 @@ function drawBall() {
   ctx.fill();
   ctx.closePath();
 }
+
 function drawPaddle() {
   ctx.beginPath();
   ctx.rect(paddle.x, paddle.y, paddle.w, paddle.h);
@@ -69,10 +77,12 @@ function drawPaddle() {
   ctx.fill();
   ctx.closePath();
 }
+
 function drawScore() {
   ctx.font = '20px Arial';
-  ctx.fillText(`Score: ${score}`, V_WIDTH-100, 30);
+  ctx.fillText(`Score: ${score}`, canvas.width-100, 30);
 }
+
 function drawBricks() {
   bricks.forEach(col => col.forEach(brick => {
     ctx.beginPath();
@@ -82,17 +92,18 @@ function drawBricks() {
     ctx.closePath();
   }));
 }
+
 function showAllBricks() {
   bricks.forEach(col => col.forEach(brick => brick.visible = true));
 }
 
-// Move paddle (smooth + keyboard)
+// Move paddle smoothly
 function movePaddle() {
-  paddle.x += (targetPaddleX - paddle.x) * 0.2; // smooth touch
-  paddle.x += paddle.dx; // keyboard
+  paddle.x += (targetPaddleX - paddle.x) * 0.2;
+  paddle.x += paddle.dx;
 
   if (paddle.x < 0) paddle.x = 0;
-  if (paddle.x + paddle.w > V_WIDTH) paddle.x = V_WIDTH - paddle.w;
+  if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
 }
 
 // Ball movement
@@ -100,7 +111,7 @@ function moveBall() {
   ball.x += ball.dx;
   ball.y += ball.dy;
 
-  if (ball.x + ball.size > V_WIDTH || ball.x - ball.size < 0) ball.dx *= -1;
+  if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) ball.dx *= -1;
   if (ball.y - ball.size < 0) ball.dy *= -1;
 
   // Paddle collision with angle
@@ -139,17 +150,16 @@ function moveBall() {
     }
   }));
 
-  // Bottom hit
-  if (ball.y + ball.size > V_HEIGHT) {
+  if (ball.y + ball.size > canvas.height) {
     showAllBricks();
     score = 0;
     resetPositions();
   }
 }
 
-// Draw
+// Draw everything
 function draw() {
-  ctx.clearRect(0,0,V_WIDTH,V_HEIGHT);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBall();
   drawPaddle();
   drawScore();
@@ -179,6 +189,8 @@ document.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   targetPaddleX = mouseX - paddle.w/2;
+  if (targetPaddleX < 0) targetPaddleX = 0;
+  if (targetPaddleX + paddle.w > canvas.width) targetPaddleX = canvas.width - paddle.w;
 });
 
 // Touch
@@ -187,9 +199,14 @@ canvas.addEventListener('touchmove', e => {
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
   targetPaddleX = touchX - paddle.w/2;
+  if (targetPaddleX < 0) targetPaddleX = 0;
+  if (targetPaddleX + paddle.w > canvas.width) targetPaddleX = canvas.width - paddle.w;
 }, { passive: false });
 
 // Rules popup
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
 closeBtn.addEventListener('click', () => rules.classList.remove('show'));
 
+// Initial resize
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
