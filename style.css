@@ -52,3 +52,14 @@ canvas {
 }
 
 .rules-btn { position: absolute; top: 20px; left: 20px; z-index: 11; }
+
+/* Move button below title on small screens */
+@media (max-width: 480px) {
+  .rules-btn {
+    position: static; /* no longer absolute */
+    margin: 10px auto 20px auto; /* center below title */
+    display: block;
+  }
+}
+
+
