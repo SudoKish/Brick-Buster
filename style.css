@@ -11,7 +11,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   margin: 0;
-  padding: 10px; /* ✅ add padding for small screens */
+  padding: 10px; /* ✅ padding for small screens */
   overflow-x: hidden; /* prevent horizontal scroll */
 }
 
@@ -28,6 +28,7 @@ canvas {
   border-radius: 5px;
   max-width: 100%;   /* ✅ prevent overflow */
   height: auto;      /* ✅ scale with width */
+  touch-action: none; /* ✅ prevent scrolling when touching canvas */
 }
 
 .btn {
@@ -37,7 +38,8 @@ canvas {
   background: #000;
   color: #fff;
   border-radius: 5px;
-  font-size: 1rem; /* ✅ scalable font */
+  font-size: 1rem;
+  user-select: none; /* ✅ prevent text selection on double tap */
 }
 
 .btn:focus {
@@ -60,23 +62,49 @@ canvas {
 }
 
 .rules {
-  position: fixed;  /* ✅ use fixed so it always covers screen */
+  position: fixed;  /* ✅ always covers screen */
   top: 0;
   left: 0;
   background: #333;
   color: #fff;
   height: 100vh;
-  width: 80%;        /* ✅ use percentage instead of fixed px */
-  max-width: 400px;  /* ✅ keep limit for large screens */
+  width: 80%;        
+  max-width: 400px;  
   padding: 20px;
   line-height: 1.5;
   transform: translateX(-100%);
-  transition: transform 0.4s ease-in-out; /* ✅ smoother */
+  transition: transform 0.4s ease-in-out;
   z-index: 9;
 }
 
 .rules.show {
   transform: translateX(0);
+}
+
+/* ✅ Mobile controls (on-screen buttons) */
+.mobile-controls {
+  display: none; /* hidden by default */
+  width: 100%;
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+}
+
+.mobile-controls button {
+  flex: 1;
+  margin: 0 5px;
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  background: #0095dd;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.mobile-controls button:active {
+  background: #0077aa;
 }
 
 /* ✅ Responsive adjustments */
@@ -91,8 +119,12 @@ canvas {
   }
 
   .rules {
-    width: 100%;   /* full width on small screens */
+    width: 100%;   
     max-width: none;
+  }
+
+  .mobile-controls {
+    display: flex; /* show controls on tablets & mobiles */
   }
 }
 
@@ -104,5 +136,10 @@ canvas {
   .btn {
     padding: 6px 12px;
     font-size: 0.8rem;
+  }
+
+  .mobile-controls button {
+    font-size: 1rem;
+    padding: 10px;
   }
 }
