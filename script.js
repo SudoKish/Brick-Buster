@@ -5,16 +5,11 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let score = 0;
-let level = 1;
-let maxLevel = 5;
 let delay = 1000;
 
 // Default game size
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
-
-// Brick colors
-const brickColors = ['#0095dd', '#ff6347', '#32cd32', '#ffa500', '#9932cc'];
 
 // Paddle & Ball
 const paddle = { w: 80, h: 10, speed: 8, dx: 0, x: 0, y: 0, visible: true };
@@ -22,6 +17,8 @@ const ball = { size: 10, speed: 4, dx: 4, dy: -4, x: 0, y: 0, visible: true };
 
 // Bricks
 let bricks = [];
+let brickRowCount = 9;
+let brickColumnCount = 5;
 let brickInfo = { w: 70, h: 20, padding: 10, offsetX: 45, offsetY: 60, visible: true };
 
 // Paddle target for smooth touch
@@ -41,17 +38,20 @@ function resizeCanvas() {
     canvas.height = DEFAULT_HEIGHT;
   }
 
-  // Scale game elements proportionally
   const scaleX = canvas.width / DEFAULT_WIDTH;
   const scaleY = canvas.height / DEFAULT_HEIGHT;
 
+  paddle.w = 80 * scaleX;
   paddle.h = 10 * scaleY;
   paddle.speed = 8 * scaleX;
-  paddle.y = canvas.height - 20 * scaleY;
   paddle.x = canvas.width / 2 - paddle.w / 2;
+  paddle.y = canvas.height - 20 * scaleY;
   targetPaddleX = paddle.x;
 
-  ball.size = 10 * ((scaleX + scaleY) / 2);
+  ball.size = 10 * ((scaleX + scaleY)/2);
+  ball.speed = 4 * scaleX;
+  ball.dx = ball.speed;
+  ball.dy = -ball.speed;
   ball.x = canvas.width / 2;
   ball.y = canvas.height / 2;
 
@@ -64,43 +64,21 @@ function resizeCanvas() {
   createBricks();
 }
 
-function setupLevel() {
-  // Increase bricks per level
-  brickRowCount = 4 + level;
-  brickColumnCount = 3 + Math.floor(level / 2);
-
-  // Increase ball speed per level
-  ball.speed = 4 + level;
-  ball.dx = ball.speed;
-  ball.dy = -ball.speed;
-
-  // Shrink paddle slightly per level
-  const minPaddleWidth = 50;
-  paddle.w = Math.max(80 - (level - 1) * 10, minPaddleWidth);
-  paddle.x = canvas.width / 2 - paddle.w / 2;
-  targetPaddleX = paddle.x;
-
-  resizeCanvas();
-}
-
 function createBricks() {
   bricks = [];
-  const color = brickColors[(level - 1) % brickColors.length];
-
   for (let i = 0; i < brickRowCount; i++) {
     bricks[i] = [];
     for (let j = 0; j < brickColumnCount; j++) {
       const x = i * (brickInfo.w + brickInfo.padding) + brickInfo.offsetX;
       const y = j * (brickInfo.h + brickInfo.padding) + brickInfo.offsetY;
-      const offsetYPattern = (level % 2 === 0 && j % 2 === 1) ? brickInfo.h / 2 : 0;
-      bricks[i][j] = { x, y: y + offsetYPattern, ...brickInfo, color, visible: true };
+      bricks[i][j] = { x, y, ...brickInfo };
     }
   }
 }
 
 function drawBall() {
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
+  ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI*2);
   ctx.fillStyle = ball.visible ? '#0095dd' : 'transparent';
   ctx.fill();
   ctx.closePath();
@@ -116,16 +94,14 @@ function drawPaddle() {
 
 function drawScore() {
   ctx.font = `${20 * (canvas.width / DEFAULT_WIDTH)}px Arial`;
-  ctx.fillText(`Score: ${score}`, canvas.width - 100, 30);
-  ctx.fillText(`Level: ${level}`, 20, 30);
-  ctx.fillText(`Paddle: ${Math.round(paddle.w)}px`, 20, 60);
+  ctx.fillText(`Score: ${score}`, canvas.width-100, 30);
 }
 
 function drawBricks() {
   bricks.forEach(col => col.forEach(brick => {
     ctx.beginPath();
     ctx.rect(brick.x, brick.y, brick.w, brick.h);
-    ctx.fillStyle = brick.visible ? brick.color : 'transparent';
+    ctx.fillStyle = brick.visible ? '#0095dd' : 'transparent';
     ctx.fill();
     ctx.closePath();
   }));
@@ -155,9 +131,9 @@ function moveBall() {
       ball.x - ball.size < paddle.x + paddle.w &&
       ball.y + ball.size > paddle.y &&
       ball.y - ball.size < paddle.y + paddle.h) {
-    const collidePoint = ball.x - (paddle.x + paddle.w / 2);
-    const normalized = collidePoint / (paddle.w / 2);
-    const angle = normalized * Math.PI / 3;
+    const collidePoint = ball.x - (paddle.x + paddle.w/2);
+    const normalized = collidePoint / (paddle.w/2);
+    const angle = normalized * Math.PI/3;
     ball.dx = ball.speed * Math.sin(angle);
     ball.dy = -ball.speed * Math.cos(angle);
   }
@@ -177,36 +153,29 @@ function moveBall() {
     if (brick.visible) allBricksCleared = false;
   }));
 
+  // Reset if all bricks cleared
   if (allBricksCleared) {
     ball.visible = false;
     paddle.visible = false;
     setTimeout(() => {
-      if (level < maxLevel) {
-        level++;
-        score = 0;
-        setupLevel();
-        ball.visible = true;
-        paddle.visible = true;
-      } else {
-        alert('Congratulations! You completed all levels!');
-        level = 1;
-        score = 0;
-        setupLevel();
-        ball.visible = true;
-        paddle.visible = true;
-      }
+      showAllBricks();
+      score = 0;
+      resizeCanvas();
+      ball.visible = true;
+      paddle.visible = true;
     }, delay);
   }
 
+  // Reset if ball falls
   if (ball.y + ball.size > canvas.height) {
-    alert('Game Over! Restarting Level.');
+    showAllBricks();
     score = 0;
-    setupLevel();
+    resizeCanvas();
   }
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBall();
   drawPaddle();
   drawScore();
@@ -227,14 +196,14 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') paddle.dx = -paddle.speed;
 });
 document.addEventListener('keyup', e => {
-  if (['ArrowRight', 'ArrowLeft'].includes(e.key)) paddle.dx = 0;
+  if (['ArrowRight','ArrowLeft'].includes(e.key)) paddle.dx = 0;
 });
 
 // Mouse controls
 document.addEventListener('mousemove', e => {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
-  targetPaddleX = mouseX - paddle.w / 2;
+  targetPaddleX = mouseX - paddle.w/2;
   if (targetPaddleX < 0) targetPaddleX = 0;
   if (targetPaddleX + paddle.w > canvas.width) targetPaddleX = canvas.width - paddle.w;
 });
@@ -244,7 +213,7 @@ canvas.addEventListener('touchmove', e => {
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
-  targetPaddleX = touchX - paddle.w / 2;
+  targetPaddleX = touchX - paddle.w/2;
   if (targetPaddleX < 0) targetPaddleX = 0;
   if (targetPaddleX + paddle.w > canvas.width) targetPaddleX = canvas.width - paddle.w;
 }, { passive: false });
@@ -253,6 +222,6 @@ canvas.addEventListener('touchmove', e => {
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
 closeBtn.addEventListener('click', () => rules.classList.remove('show'));
 
-// Initial setup
-setupLevel();
+// Initial resize
+resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
