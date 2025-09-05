@@ -253,4 +253,36 @@ function movePaddleWithMouse(e) {
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
 closeBtn.addEventListener('click', () => rules.classList.remove('show'));
 
+// Mobile control buttons
+const leftBtn = document.getElementById("left-btn");
+const rightBtn = document.getElementById("right-btn");
+
+// Left button hold
+leftBtn.addEventListener("touchstart", () => {
+  paddle.dx = -paddle.speed;
+});
+leftBtn.addEventListener("touchend", () => {
+  paddle.dx = 0;
+});
+
+// Right button hold
+rightBtn.addEventListener("touchstart", () => {
+  paddle.dx = paddle.speed;
+});
+rightBtn.addEventListener("touchend", () => {
+  paddle.dx = 0;
+});
+
+// Also support clicks (desktop)
+leftBtn.addEventListener("mousedown", () => {
+  paddle.dx = -paddle.speed;
+});
+rightBtn.addEventListener("mousedown", () => {
+  paddle.dx = paddle.speed;
+});
+document.addEventListener("mouseup", () => {
+  paddle.dx = 0;
+});
+
+
 //change is done for the mobile
