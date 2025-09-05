@@ -8,9 +8,9 @@ let score = 0;
 
 const brickRowCount = 9;
 const brickColumnCount = 5;
-const delay = 500; //delay to reset the game
+const delay = 500; // delay to reset game
 
-// Create ball props
+// Ball
 const ball = {
   x: canvas.width / 2,
   y: canvas.height / 2,
@@ -21,7 +21,14 @@ const ball = {
   visible: true
 };
 
-// Create paddle props
+// ✅ Mobile speed adjustment
+if (window.innerWidth <= 768) {
+  ball.speed = 6; // faster speed on mobile
+  ball.dx = 6;
+  ball.dy = -6;
+}
+
+// Paddle
 const paddle = {
   x: canvas.width / 2 - 40,
   y: canvas.height - 20,
@@ -32,7 +39,7 @@ const paddle = {
   visible: true
 };
 
-// Create brick props
+// Brick
 const brickInfo = {
   w: 70,
   h: 20,
@@ -53,7 +60,7 @@ for (let i = 0; i < brickRowCount; i++) {
   }
 }
 
-// Draw ball on canvas
+// Draw ball
 function drawBall() {
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2);
@@ -62,7 +69,7 @@ function drawBall() {
   ctx.closePath();
 }
 
-// Draw paddle on canvas
+// Draw paddle
 function drawPaddle() {
   ctx.beginPath();
   ctx.rect(paddle.x, paddle.y, paddle.w, paddle.h);
@@ -71,13 +78,13 @@ function drawPaddle() {
   ctx.closePath();
 }
 
-// Draw score on canvas
+// Draw score
 function drawScore() {
   ctx.font = '20px Arial';
   ctx.fillText(`Score: ${score}`, canvas.width - 100, 30);
 }
 
-// Draw bricks on canvas
+// Draw bricks
 function drawBricks() {
   bricks.forEach(column => {
     column.forEach(brick => {
@@ -90,42 +97,34 @@ function drawBricks() {
   });
 }
 
-// Move paddle on canvas (keyboard)
+// Move paddle (keyboard)
 function movePaddle() {
   paddle.x += paddle.dx;
-
-  // Wall detection
-  if (paddle.x + paddle.w > canvas.width) {
-    paddle.x = canvas.width - paddle.w;
-  }
-
-  if (paddle.x < 0) {
-    paddle.x = 0;
-  }
+  if (paddle.x < 0) paddle.x = 0;
+  if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
 }
 
-// Move ball on canvas
+// Move ball with optimized collision
 function moveBall() {
   ball.x += ball.dx;
   ball.y += ball.dy;
 
-  // Wall collision (right/left)
-  if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) {
-    ball.dx *= -1; // ball.dx = ball.dx * -1
-  }
-
-  // Wall collision (top/bottom)
-  if (ball.y + ball.size > canvas.height || ball.y - ball.size < 0) {
-    ball.dy *= -1;
-  }
+  // Wall collision
+  if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) ball.dx *= -1;
+  if (ball.y - ball.size < 0) ball.dy *= -1;
 
   // Paddle collision
   if (
-    ball.x - ball.size > paddle.x &&
-    ball.x + ball.size < paddle.x + paddle.w &&
-    ball.y + ball.size > paddle.y
+    ball.x + ball.size > paddle.x &&
+    ball.x - ball.size < paddle.x + paddle.w &&
+    ball.y + ball.size > paddle.y &&
+    ball.y - ball.size < paddle.y + paddle.h
   ) {
-    ball.dy = -ball.speed;
+    const collidePoint = ball.x - (paddle.x + paddle.w / 2);
+    const normalizedPoint = collidePoint / (paddle.w / 2);
+    const angle = normalizedPoint * Math.PI / 3; // 60deg max
+    ball.dx = ball.speed * Math.sin(angle);
+    ball.dy = -ball.speed * Math.cos(angle);
   }
 
   // Brick collision
@@ -133,37 +132,48 @@ function moveBall() {
     column.forEach(brick => {
       if (brick.visible) {
         if (
-          ball.x - ball.size > brick.x && // left brick side check
-          ball.x + ball.size < brick.x + brick.w && // right brick side check
-          ball.y + ball.size > brick.y && // top brick side check
-          ball.y - ball.size < brick.y + brick.h // bottom brick side check
+          ball.x + ball.size > brick.x &&
+          ball.x - ball.size < brick.x + brick.w &&
+          ball.y + ball.size > brick.y &&
+          ball.y - ball.size < brick.y + brick.h
         ) {
-          ball.dy *= -1;
-          brick.visible = false;
+          // Determine collision side
+          const collideFromLeft = ball.x < brick.x;
+          const collideFromRight = ball.x > brick.x + brick.w;
+          const collideFromTop = ball.y < brick.y;
+          const collideFromBottom = ball.y > brick.y + brick.h;
 
+          if (collideFromLeft || collideFromRight) ball.dx *= -1;
+          else ball.dy *= -1;
+
+          brick.visible = false;
           increaseScore();
         }
       }
     });
   });
 
-  // Hit bottom wall - Lose
+  // Hit bottom - reset game
   if (ball.y + ball.size > canvas.height) {
     showAllBricks();
     score = 0;
+
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.dx = ball.speed;
+    ball.dy = -ball.speed;
+    paddle.x = canvas.width / 2 - paddle.w / 2;
   }
 }
 
-// Increase score
+// Increase score & restart when all bricks broken
 function increaseScore() {
   score++;
-
   if (score % (brickRowCount * brickColumnCount) === 0) {
     ball.visible = false;
     paddle.visible = false;
 
-    //After 0.5 sec restart the game
-    setTimeout(function () {
+    setTimeout(() => {
       showAllBricks();
       score = 0;
       paddle.x = canvas.width / 2 - 40;
@@ -176,7 +186,7 @@ function increaseScore() {
   }
 }
 
-// Make all bricks appear
+// Show all bricks
 function showAllBricks() {
   bricks.forEach(column => {
     column.forEach(brick => (brick.visible = true));
@@ -185,104 +195,51 @@ function showAllBricks() {
 
 // Draw everything
 function draw() {
-  // clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   drawBall();
   drawPaddle();
   drawScore();
   drawBricks();
 }
 
-// Update canvas drawing and animation
+// Update loop
 function update() {
   movePaddle();
   moveBall();
-
-  // Draw everything
   draw();
-
   requestAnimationFrame(update);
 }
 
 update();
 
-// Keydown event
-function keyDown(e) {
-  if (e.key === 'Right' || e.key === 'ArrowRight') {
-    paddle.dx = paddle.speed;
-  } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
-    paddle.dx = -paddle.speed;
-  }
-}
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') paddle.dx = paddle.speed;
+  else if (e.key === 'ArrowLeft') paddle.dx = -paddle.speed;
+});
+document.addEventListener('keyup', (e) => {
+  if (['ArrowRight','ArrowLeft'].includes(e.key)) paddle.dx = 0;
+});
 
-// Keyup event
-function keyUp(e) {
-  if (
-    e.key === 'Right' ||
-    e.key === 'ArrowRight' ||
-    e.key === 'Left' ||
-    e.key === 'ArrowLeft'
-  ) {
-    paddle.dx = 0;
-  }
-}
-
-// Keyboard event handlers
-document.addEventListener('keydown', keyDown);
-document.addEventListener('keyup', keyUp);
-
-// ✅ Mouse move event (new code)
-document.addEventListener('mousemove', movePaddleWithMouse);
-
-function movePaddleWithMouse(e) {
+// Mouse controls (desktop)
+document.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
-
   paddle.x = mouseX - paddle.w / 2;
+  if (paddle.x < 0) paddle.x = 0;
+  if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
+});
 
-  // Prevent paddle from going outside canvas
-  if (paddle.x < 0) {
-    paddle.x = 0;
-  } else if (paddle.x + paddle.w > canvas.width) {
-    paddle.x = canvas.width - paddle.w;
-  }
-}
+// Touch controls (mobile)
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touchX = e.touches[0].clientX - rect.left;
+  paddle.x = touchX - paddle.w / 2;
+  if (paddle.x < 0) paddle.x = 0;
+  if (paddle.x + paddle.w > canvas.width) paddle.x = canvas.width - paddle.w;
+}, { passive: false });
 
-// Rules and close event handlers
+// Rules popup
 rulesBtn.addEventListener('click', () => rules.classList.add('show'));
 closeBtn.addEventListener('click', () => rules.classList.remove('show'));
-
-// Mobile control buttons
-const leftBtn = document.getElementById("left-btn");
-const rightBtn = document.getElementById("right-btn");
-
-// Left button hold
-leftBtn.addEventListener("touchstart", () => {
-  paddle.dx = -paddle.speed;
-});
-leftBtn.addEventListener("touchend", () => {
-  paddle.dx = 0;
-});
-
-// Right button hold
-rightBtn.addEventListener("touchstart", () => {
-  paddle.dx = paddle.speed;
-});
-rightBtn.addEventListener("touchend", () => {
-  paddle.dx = 0;
-});
-
-// Also support clicks (desktop)
-leftBtn.addEventListener("mousedown", () => {
-  paddle.dx = -paddle.speed;
-});
-rightBtn.addEventListener("mousedown", () => {
-  paddle.dx = paddle.speed;
-});
-document.addEventListener("mouseup", () => {
-  paddle.dx = 0;
-});
-
-
-//change is done for the mobile
