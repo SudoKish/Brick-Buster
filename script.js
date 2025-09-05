@@ -9,59 +9,76 @@ let score = 0;
 // Default game size
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
-const brickRowCount = 9;
-const brickColumnCount = 5;
-const delay = 500;
 
-// Paddle
+// Game constants
+let brickRowCount = 9;
+let brickColumnCount = 5;
+
+// Paddle & Ball
 const paddle = { w: 80, h: 10, speed: 8, dx: 0, x: 0, y: 0, visible: true };
-
-// Ball
 const ball = { size: 10, speed: 4, dx: 4, dy: -4, x: 0, y: 0, visible: true };
 
 // Bricks
-const brickInfo = { w: 70, h: 20, padding: 10, offsetX: 45, offsetY: 60, visible: true };
-const bricks = [];
-for (let i = 0; i < brickRowCount; i++) {
-  bricks[i] = [];
-  for (let j = 0; j < brickColumnCount; j++) {
-    const x = i * (brickInfo.w + brickInfo.padding) + brickInfo.offsetX;
-    const y = j * (brickInfo.h + brickInfo.padding) + brickInfo.offsetY;
-    bricks[i][j] = { x, y, ...brickInfo };
-  }
-}
+let bricks = [];
+let brickInfo = { w: 70, h: 20, padding: 10, offsetX: 45, offsetY: 60, visible: true };
 
 // Paddle target for smooth touch
 let targetPaddleX = 0;
 
-// Resize canvas for mobile and initialize positions
+// --- Functions ---
+
 function resizeCanvas() {
-  if (window.innerWidth <= 768) {
-    canvas.width = window.innerWidth * 0.95;
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+
+  if (screenWidth < DEFAULT_WIDTH) {
+    canvas.width = screenWidth * 0.95;
     canvas.height = canvas.width * (DEFAULT_HEIGHT / DEFAULT_WIDTH);
-    ball.speed = 5; // slightly faster on mobile
   } else {
     canvas.width = DEFAULT_WIDTH;
     canvas.height = DEFAULT_HEIGHT;
-    ball.speed = 4;
   }
 
-  resetPositions();
-}
+  // Scale game elements proportionally
+  const scaleX = canvas.width / DEFAULT_WIDTH;
+  const scaleY = canvas.height / DEFAULT_HEIGHT;
 
-// Reset positions
-function resetPositions() {
+  paddle.w = 80 * scaleX;
+  paddle.h = 10 * scaleY;
+  paddle.speed = 8 * scaleX;
   paddle.x = canvas.width / 2 - paddle.w / 2;
-  paddle.y = canvas.height - 20;
+  paddle.y = canvas.height - 20 * scaleY;
   targetPaddleX = paddle.x;
 
-  ball.x = canvas.width / 2;
-  ball.y = canvas.height / 2;
+  ball.size = 10 * ((scaleX + scaleY)/2);
+  ball.speed = 4 * scaleX;
   ball.dx = ball.speed;
   ball.dy = -ball.speed;
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height / 2;
+
+  // Bricks
+  brickInfo.w = 70 * scaleX;
+  brickInfo.h = 20 * scaleY;
+  brickInfo.padding = 10 * scaleX;
+  brickInfo.offsetX = 45 * scaleX;
+  brickInfo.offsetY = 60 * scaleY;
+
+  createBricks();
 }
 
-// Draw functions
+function createBricks() {
+  bricks = [];
+  for (let i = 0; i < brickRowCount; i++) {
+    bricks[i] = [];
+    for (let j = 0; j < brickColumnCount; j++) {
+      const x = i * (brickInfo.w + brickInfo.padding) + brickInfo.offsetX;
+      const y = j * (brickInfo.h + brickInfo.padding) + brickInfo.offsetY;
+      bricks[i][j] = { x, y, ...brickInfo };
+    }
+  }
+}
+
 function drawBall() {
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI*2);
@@ -79,7 +96,7 @@ function drawPaddle() {
 }
 
 function drawScore() {
-  ctx.font = '20px Arial';
+  ctx.font = `${20 * (canvas.width / DEFAULT_WIDTH)}px Arial`;
   ctx.fillText(`Score: ${score}`, canvas.width-100, 30);
 }
 
@@ -97,7 +114,7 @@ function showAllBricks() {
   bricks.forEach(col => col.forEach(brick => brick.visible = true));
 }
 
-// Move paddle smoothly
+// Smooth paddle movement
 function movePaddle() {
   paddle.x += (targetPaddleX - paddle.x) * 0.2;
   paddle.x += paddle.dx;
@@ -114,7 +131,7 @@ function moveBall() {
   if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) ball.dx *= -1;
   if (ball.y - ball.size < 0) ball.dy *= -1;
 
-  // Paddle collision with angle
+  // Paddle collision
   if (ball.x + ball.size > paddle.x &&
       ball.x - ball.size < paddle.x + paddle.w &&
       ball.y + ball.size > paddle.y &&
@@ -142,7 +159,7 @@ function moveBall() {
         setTimeout(() => {
           showAllBricks();
           score = 0;
-          resetPositions();
+          resizeCanvas();
           ball.visible = true;
           paddle.visible = true;
         }, delay);
@@ -153,7 +170,7 @@ function moveBall() {
   if (ball.y + ball.size > canvas.height) {
     showAllBricks();
     score = 0;
-    resetPositions();
+    resizeCanvas();
   }
 }
 
